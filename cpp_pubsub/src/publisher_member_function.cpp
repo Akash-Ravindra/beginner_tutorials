@@ -20,6 +20,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "custom_interfaces/srv/change_string.hpp"
 
 using namespace std::chrono_literals;
 
@@ -29,9 +30,13 @@ using namespace std::chrono_literals;
 class MinimalPublisher : public rclcpp::Node {
  public:
   MinimalPublisher()
-      : Node("Custom_Node_Publisher"), msg_("The power-ball number is =") {
+      : Node("Custom_Node_Publisher"), msg_("The power-ball number is = ") {
     publisher_ =
         this->create_publisher<std_msgs::msg::String>("custom_topic", 10);
+    service_ = this->create_service<custom_interfaces::srv::ChangeString>("change_string", std::bind(&MinimalPublisher::change_string_callback, this, std::placeholders::_1, std::placeholders::_2));
+    if(msg_ == "The power-ball number is = "){
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "Using Default String");
+    }
     timer_ = this->create_wall_timer(
         500ms, std::bind(&MinimalPublisher::timer_callback, this));
   }
@@ -39,13 +44,22 @@ class MinimalPublisher : public rclcpp::Node {
  private:
   void timer_callback() {
     auto message = std_msgs::msg::String();
-    int random_number = rand_r() % 100;
-    message.data = msg_ + " " + std::to_string(random_number);
+    int random_number = rand() % 100;
+    message.data = msg_ + std::to_string(random_number);
     RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
     publisher_->publish(message);
   }
+  void change_string_callback(const std::shared_ptr<custom_interfaces::srv::ChangeString::Request> request,
+                        std::shared_ptr<custom_interfaces::srv::ChangeString::Response> response)
+  {
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "Service Request Received");
+    msg_ = request->input;
+    response->success = true;
+    RCLCPP_INFO_STREAM(this->get_logger(), ("Changing the string to: "+msg_));
+  }
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  rclcpp::Service<custom_interfaces::srv::ChangeString>::SharedPtr service_;
   std::string msg_;
 };
 
