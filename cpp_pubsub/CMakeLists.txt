@@ -12,17 +12,21 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-
+find_package(custom_interfaces REQUIRED)
 
 add_executable(talker src/publisher_member_function.cpp)
-ament_target_dependencies(talker rclcpp std_msgs)
+ament_target_dependencies(talker rclcpp std_msgs custom_interfaces)
 
 add_executable(listener src/subscriber_member_function.cpp)
-ament_target_dependencies(listener rclcpp std_msgs)
+ament_target_dependencies(listener rclcpp std_msgs custom_interfaces)
+
+add_executable(talker_client src/update_publisher.cpp)
+ament_target_dependencies(talker_client rclcpp std_msgs custom_interfaces)
 
 install(TARGETS
   talker
   listener
+  talker_client
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
