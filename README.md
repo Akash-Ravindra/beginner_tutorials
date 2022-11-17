@@ -1,3 +1,4 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](https://opensource.org/licenses/MIT)
 # ROS Publisher
 A list of ROS2 packages
 ## Packages
