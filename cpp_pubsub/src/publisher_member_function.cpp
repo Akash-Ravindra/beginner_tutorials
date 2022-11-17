@@ -20,15 +20,26 @@
 
 using namespace std::chrono_literals;
 
-/* This example creates a subclass of Node and uses std::bind() to register a
- * member function as a callback from the timer. */
-
+/// @brief This class is used to publish a string message to a topic
+/// The class inherits from the rclcpp::Node class
+/// The class has a publisher member function which publishes a string message
+/// to a topic
+/// The class has a timer member function which calls the publisher member
+/// function at a specified frequency set using parameter server
+/// The class has a service member function which updates the string message
+/// to be published
 class MinimalPublisher : public rclcpp::Node {
  public:
   MinimalPublisher()
       : Node("Custom_Node_Publisher"), msg_("The power-ball number is = ") {
+    // Declare and acquire parameters from the parameter server
+    this->declare_parameter("talker_f", 1.0);
+    auto frequency =
+        this->get_parameter("talker_f").get_parameter_value().get<double>();
+    // Create a publisher
     publisher_ =
         this->create_publisher<std_msgs::msg::String>("custom_topic", 10);
+    // Create a service server
     service_ = this->create_service<custom_interfaces::srv::ChangeString>(
         "change_string",
         std::bind(&MinimalPublisher::change_string_callback, this,
@@ -36,19 +47,26 @@ class MinimalPublisher : public rclcpp::Node {
     if (msg_ == "The power-ball number is = ") {
       RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "Using Default String");
     }
+    // Create a timer
     timer_ = this->create_wall_timer(
-        500ms, std::bind(&MinimalPublisher::timer_callback, this));
+        std::chrono::duration<double>(1 / frequency),
+        std::bind(&MinimalPublisher::timer_callback, this));
   }
 
  private:
+  /// @brief This function is used to publish a string message to a topic
   void timer_callback() {
     auto message = std_msgs::msg::String();
-    unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
+    unsigned int seed =
+        std::chrono::system_clock::now().time_since_epoch().count();
     int random_number = rand_r(&seed) % 100;
     message.data = msg_ + std::to_string(random_number);
-    RCLCPP_INFO(this->get_logger(), "Publishing: " + message.data);
+    RCLCPP_INFO(this->get_logger(), "Publishing: %s", message.data.c_str());
     publisher_->publish(message);
   }
+  /// @brief This function is used to update the string message to be published
+  /// @param request
+  /// @param response
   void change_string_callback(
       const std::shared_ptr<custom_interfaces::srv::ChangeString::Request>
           request,
@@ -64,7 +82,10 @@ class MinimalPublisher : public rclcpp::Node {
   rclcpp::Service<custom_interfaces::srv::ChangeString>::SharedPtr service_;
   std::string msg_;
 };
-
+/// @brief  Main function for the publisher node
+/// @param argc
+/// @param argv
+/// @return
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<MinimalPublisher>());
