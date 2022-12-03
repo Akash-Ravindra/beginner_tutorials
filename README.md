@@ -85,3 +85,8 @@ To replay the bag file along with a listener node run the following command
 # This will play the bag file recorded in the results path 
 ros2 launch cpp_pubsub talker_listener_bagger.py replay_only:='True' bag_file:='./src/cpp_pubsub/results/new_recording'
 ```
+
+Run the unit tests by running the command 
+```bash
+colcon test --event-handlers console_direct+ --packages-select cpp_pubsub
+```
